@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -44,5 +45,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // Relations éventuelles (si vous voulez lier user -> events, user -> inscriptions, etc.)
+    public function events()
+    {
+        return $this->hasMany(Event::class, 'user_id');
     }
 }
