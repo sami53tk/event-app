@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EventRegistered;
 
 class EventController extends Controller
 {
@@ -141,6 +143,12 @@ class EventController extends Controller
         // Mise à jour
         $event->update($validatedData);
 
+        if ($validatedData['status'] === 'annule') {
+            foreach ($event->participants as $participant) {
+                Mail::to($participant->email)->send(new \App\Mail\EventCancelled($event, $participant));
+            }
+        }
+
         return redirect()->route('events.index')
                          ->with('success', 'Événement mis à jour !');
     }
@@ -189,9 +197,83 @@ class EventController extends Controller
 
         // Inscription
         $event->participants()->attach($user->id);
+        // Envoi d'un email de confirmation (optionnel)
+        Mail::to($user->email)->send(new EventRegistered($event));
+
+        // Mail::to($event->user->email)->send(new EventRegistered($event));
 
         // Redirection
-        return redirect()->route('events.show', $event->id)
+        return redirect()->back()
                          ->with('success', 'Inscription réalisée avec succès !');
     }
+
+
+    /**
+     * (Optionnel) Méthode pour que le client se desinscrive à un événement.
+     * Vous pouvez la mettre ici ou dans un contrôleur dédié à l'inscription.
+     */
+
+    public function unregister($id)
+    {
+        $event = Event::findOrFail($id);
+        $user = Auth::user();
+
+        // Vérifier que le user est "client" (ou tout autre logique d'accès)
+        if ($user->role !== 'client') {
+            abort(403, 'Seuls les clients peuvent se désinscrire aux événements.');
+        }
+
+        // Vérifier que le user est inscrit
+        if (!$event->participants->contains($user->id)) {
+            return redirect()->back()->with('error', 'Vous n’êtes pas inscrit à cet événement.');
+        }
+
+        // Désinscription
+        $event->participants()->detach($user->id);
+
+        // Redirection
+        return redirect()->back()
+                         ->with('success', 'Désinscription réalisée avec succès !');
+    }
+
+    public function publicIndex(Request $request)
+    {
+        // On récupère les paramètres du formulaire de recherche
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $location = $request->input('location');
+
+        // On veut seulement les événements encore actifs, par exemple
+        // => Sinon, on pourrait afficher tous selon vos règles.
+        $query = Event::query()->where('status', 'active');
+
+        // Filtre par titre / description si "search" est renseigné
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%$search%")
+                ->orWhere('description', 'like', "%$search%");
+            });
+        }
+
+        // Filtre par location
+        if ($location) {
+            $query->where('location', 'like', "%$location%");
+        }
+
+        // Filtre par statut (si vous souhaitez afficher 'annule' aussi ?).
+        // Ici, on a déjà forcé where('status', 'active'). Mais si vous souhaitez
+        // autoriser un dropdown "active"/"annule", on peut faire :
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Exemple : Vous pourriez aussi filtrer par date >= today
+        // $query->where('date', '>=', now());
+
+        // Récupération triée par date (asc), par exemple
+        $events = $query->orderBy('date', 'asc')->paginate(10);
+
+        return view('events.index_public', compact('events'));
+    }
+
 }

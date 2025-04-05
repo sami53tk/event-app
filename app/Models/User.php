@@ -52,4 +52,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Event::class, 'user_id');
     }
+
+    // Nouvelle relation pour les événements auxquels le client est inscrit
+    public function participatedEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_user', 'user_id', 'event_id')
+                    ->withTimestamps();
+    }
 }
