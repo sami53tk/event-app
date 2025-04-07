@@ -21,7 +21,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->job(new \App\Jobs\SendEventReminder)->everyMinute();
+        $schedule->job(new \App\Jobs\SendEventReminder)->everySecond();
     }
 
     /**

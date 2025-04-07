@@ -100,7 +100,16 @@ Route::group(['middleware' => ['auth', 'role:client']], function () {
 });
 
 Route::group(['middleware' => ['auth', 'role:client']], function () {
-    Route::delete('events/{event}/unregister', [EventController::class, 'unregister'])->name('events.unregister');});
+    Route::delete('events/{event}/unregister', [EventController::class, 'unregister'])->name('events.unregister');
+});
+
+// Routes pour le paiement Stripe
+Route::group(['middleware' => ['auth', 'role:client']], function () {
+    Route::get('payment/{event}/show', [\App\Http\Controllers\PaymentController::class, 'showCheckoutPage'])->name('payment.show');
+    Route::get('payment/{event}/checkout', [\App\Http\Controllers\PaymentController::class, 'createCheckoutSession'])->name('payment.checkout');
+    Route::get('payment/{event}/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
+    Route::get('payment/{event}/cancel', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+});
 
 
 // Routes d'authentification Laravel / Breeze / Fortify (vous en avez déjà)

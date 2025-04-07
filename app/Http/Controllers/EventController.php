@@ -58,6 +58,8 @@ class EventController extends Controller
             'location'         => 'required|string|max:255',
             'status'           => 'required|in:active,annule', // Exemples de statuts
             'max_participants' => 'required|integer|min:1',
+            'price'            => 'nullable|numeric|min:0',
+            'currency'         => 'nullable|string|size:3',
             // Ajoutez d'autres champs si nécessaire
         ]);
 
@@ -132,6 +134,8 @@ class EventController extends Controller
             'location'         => 'required|string|max:255',
             'status'           => 'required|in:active,annule',
             'max_participants' => 'required|integer|min:1',
+            'price'            => 'nullable|numeric|min:0',
+            'currency'         => 'nullable|string|size:3',
         ]);
 
         // Gérer l'upload d'image (optionnel)
@@ -195,7 +199,12 @@ class EventController extends Controller
             return redirect()->back()->with('error', 'Vous êtes déjà inscrit à cet événement.');
         }
 
-        // Inscription
+        // Si l'événement est payant, rediriger vers la page de paiement
+        if ($event->price && $event->price > 0) {
+            return redirect()->route('payment.show', $event->id);
+        }
+
+        // Inscription (pour événement gratuit)
         $event->participants()->attach($user->id);
         // Envoi d'un email de confirmation (optionnel)
         Mail::to($user->email)->send(new EventRegistered($event));

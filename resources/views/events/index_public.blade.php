@@ -157,6 +157,14 @@
                         <p class="text-sm text-gray-600 mb-1">
                             <strong>Lieu :</strong> {{ $event->location }}
                         </p>
+                        <p class="text-sm text-gray-600 mb-1">
+                            <strong>Prix :</strong>
+                            @if($event->price && $event->price > 0)
+                                {{ $event->price }} {{ $event->currency }}
+                            @else
+                                Gratuit
+                            @endif
+                        </p>
 
                         {{-- Nombre de participants si la relation existe --}}
                         @if(method_exists($event, 'participants'))

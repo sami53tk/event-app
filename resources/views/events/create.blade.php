@@ -60,6 +60,21 @@
                    class="border border-gray-300 p-2 w-full rounded" min="1" required>
         </div>
 
+        <div>
+            <label for="price" class="block font-semibold">Prix (laissez vide pour un événement gratuit)</label>
+            <input type="number" name="price" id="price" value="{{ old('price') }}"
+                   class="border border-gray-300 p-2 w-full rounded" min="0" step="0.01">
+        </div>
+
+        <div>
+            <label for="currency" class="block font-semibold">Devise</label>
+            <select name="currency" id="currency" class="border border-gray-300 p-2 w-full rounded">
+                <option value="EUR" {{ old('currency') === 'EUR' ? 'selected' : '' }}>EUR</option>
+                <option value="USD" {{ old('currency') === 'USD' ? 'selected' : '' }}>USD</option>
+                <option value="GBP" {{ old('currency') === 'GBP' ? 'selected' : '' }}>GBP</option>
+            </select>
+        </div>
+
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             Créer
         </button>

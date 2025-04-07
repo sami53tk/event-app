@@ -15,6 +15,8 @@ class Event extends Model
         'location',
         'status',
         'max_participants',
+        'price',
+        'currency',
         // + tout autre champ nécessaire
     ];
 

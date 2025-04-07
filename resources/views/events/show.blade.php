@@ -159,6 +159,14 @@
                     <p>
                         <strong>Places max :</strong> {{ $event->max_participants }}
                     </p>
+                    <p>
+                        <strong>Prix :</strong>
+                        @if($event->price && $event->price > 0)
+                            {{ $event->price }} {{ $event->currency }}
+                        @else
+                            Gratuit
+                        @endif
+                    </p>
                     @if(method_exists($event, 'participants'))
                         @php
                             $current = $event->participants()->count();
