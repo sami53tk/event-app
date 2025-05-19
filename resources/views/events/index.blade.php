@@ -11,6 +11,61 @@
         </div>
     @endif
 
+    {{-- Formulaire de recherche --}}
+    <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+        <form action="{{ route('events.index') }}" method="GET" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
+                    <input type="text" name="search" id="search" value="{{ $search ?? '' }}"
+                           placeholder="Titre ou description..."
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Lieu</label>
+                    <input type="text" name="location" id="location" value="{{ $location ?? '' }}"
+                           placeholder="Lieu de l'événement"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                    <select name="status" id="status"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        <option value="">Tous les statuts</option>
+                        <option value="active" {{ ($status ?? '') == 'active' ? 'selected' : '' }}>Actif</option>
+                        <option value="annule" {{ ($status ?? '') == 'annule' ? 'selected' : '' }}>Annulé</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="date_start" class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+                    <input type="date" name="date_start" id="date_start" value="{{ $dateStart ?? '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+
+                <div>
+                    <label for="date_end" class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+                    <input type="date" name="date_end" id="date_end" value="{{ $dateEnd ?? '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
+                    Rechercher
+                </button>
+
+                <a href="{{ route('events.index') }}"
+                   class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors">
+                    Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+
     <div class="overflow-x-auto w-full">
         <table class="min-w-full text-left border-collapse">
             <thead>
@@ -47,6 +102,11 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-4">
+        {{ $events->appends(request()->query())->links() }}
     </div>
 
     {{-- Bouton de création d'événement --}}

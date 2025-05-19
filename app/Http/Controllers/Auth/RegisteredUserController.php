@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
@@ -42,6 +43,12 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        // Envoyer l'email de bienvenue
+        Mail::send('emails.welcome', ['user' => $user], function ($message) use ($user) {
+            $message->to($user->email, $user->name)
+                    ->subject('Bienvenue sur Event App !');
+        });
 
         Auth::login($user);
 

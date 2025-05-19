@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 
@@ -88,6 +89,19 @@ class PaymentController extends Controller
 
         if (!$event->participants->contains($user->id)) {
             $event->participants()->attach($user->id);
+
+            // Générer un ID de paiement unique
+            $paymentId = 'PAY-' . strtoupper(substr(md5(uniqid()), 0, 10));
+
+            // Envoyer l'email de confirmation de paiement
+            Mail::send('emails.payment_confirmed', [
+                'user' => $user,
+                'event' => $event,
+                'paymentId' => $paymentId
+            ], function ($message) use ($user, $event) {
+                $message->to($user->email, $user->name)
+                        ->subject('Paiement confirmé pour ' . $event->title);
+            });
         }
 
         return redirect()->route('events.show', $event->id)

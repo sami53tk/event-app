@@ -22,6 +22,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->job(new \App\Jobs\SendEventReminder)->everySecond();
+        $schedule->command('events:send-summary')->dailyAt('09:00');
+        $schedule->command('events:send-organizer-reminder')->dailyAt('08:00');
     }
 
     /**

@@ -1,0 +1,19 @@
+[90m= [39m[34;4mIlluminate\Support\Collection[39;24m {#6213
+    [34mall[39m: [
+      "[34madmin@example.com[39m" => "[32mAdmin[39m",
+      "[34morganisateur1@example.com[39m" => "[32mAssociation Culturelle de Paris[39m",
+      "[34morganisateur2@example.com[39m" => "[32mClub Sportif Marseillais[39m",
+      "[34morganisateur3@example.com[39m" => "[32mConférences Tech Lyon[39m",
+      "[34mclient1@example.com[39m" => "[32mSophie Martin[39m",
+      "[34mclient2@example.com[39m" => "[32mThomas Dubois[39m",
+      "[34mclient3@example.com[39m" => "[32mEmma Bernard[39m",
+      "[34mclient4@example.com[39m" => "[32mLucas Petit[39m",
+      "[34mclient5@example.com[39m" => "[32mChloé Leroy[39m",
+      "[34mclient6@example.com[39m" => "[32mHugo Moreau[39m",
+      "[34mclient7@example.com[39m" => "[32mLéa Roux[39m",
+      "[34mclient8@example.com[39m" => "[32mNathan Fournier[39m",
+      "[34mclient9@example.com[39m" => "[32mCamille Girard[39m",
+      "[34mclient10@example.com[39m" => "[32mMaxime Lambert[39m",
+    ],
+  }
+

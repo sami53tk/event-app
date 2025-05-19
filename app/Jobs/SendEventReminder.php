@@ -26,7 +26,7 @@ class SendEventReminder implements ShouldQueue
 
         foreach ($events as $event) {
             // Envoie un email de rappel à chaque participant
-            foreach ($event->users as $user) {
+            foreach ($event->participants as $user) {
                 Mail::to($user->email)->send(new \App\Mail\EventReminder($event, $user));
             }
         }

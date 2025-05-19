@@ -10,15 +10,35 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     /**
-     * Affiche la liste de tous les utilisateurs.
+     * Affiche la liste de tous les utilisateurs avec fonctionnalité de recherche.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Récupère tous les utilisateurs (vous pouvez paginer si nécessaire).
-        $users = User::orderBy('id', 'asc')->get();
+        // Récupérer les paramètres de recherche
+        $search = $request->input('search');
+        $role = $request->input('role');
 
-        // Retourne une vue, par exemple: resources/views/admin/users/index.blade.php
-        return view('admin.users.index', compact('users'));
+        // Construire la requête
+        $query = User::query();
+
+        // Appliquer le filtre de recherche si présent
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtrer par rôle si spécifié
+        if ($role) {
+            $query->where('role', $role);
+        }
+
+        // Récupérer les utilisateurs avec pagination
+        $users = $query->orderBy('id', 'asc')->paginate(10);
+
+        // Retourne une vue avec les utilisateurs filtrés
+        return view('admin.users.index', compact('users', 'search', 'role'));
     }
 
     /**

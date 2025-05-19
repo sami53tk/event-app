@@ -45,6 +45,55 @@
         </a>
     </div>
 
+    {{-- Formulaire de recherche --}}
+    <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+        <h2 class="text-xl font-semibold mb-4">Rechercher mes événements</h2>
+        <form action="{{ route('dashboard.client') }}" method="GET" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
+                    <input type="text" name="search" id="search" value="{{ $search ?? '' }}"
+                           placeholder="Titre, description ou lieu..."
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                    <select name="status" id="status"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        <option value="">Tous les statuts</option>
+                        <option value="active" {{ ($status ?? '') == 'active' ? 'selected' : '' }}>Actif</option>
+                        <option value="annule" {{ ($status ?? '') == 'annule' ? 'selected' : '' }}>Annulé</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="date_start" class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+                    <input type="date" name="date_start" id="date_start" value="{{ $dateStart ?? '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+
+                <div>
+                    <label for="date_end" class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+                    <input type="date" name="date_end" id="date_end" value="{{ $dateEnd ?? '' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
+                    Rechercher
+                </button>
+
+                <a href="{{ route('dashboard.client') }}"
+                   class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md transition-colors">
+                    Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+
     {{-- Liste des événements inscrits --}}
     <h2 class="text-2xl font-bold mb-4">Mes événements inscrits</h2>
     @if($events->isEmpty())
@@ -95,6 +144,11 @@
                     </div>
                 </div>
             @endforeach
+        </div>
+
+        {{-- Pagination --}}
+        <div class="mt-6">
+            {{ $events->appends(request()->query())->links() }}
         </div>
     @endif
 </div>

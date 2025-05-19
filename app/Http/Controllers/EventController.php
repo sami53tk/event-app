@@ -7,32 +7,62 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EventRegistered;
+use Carbon\Carbon;
 
 class EventController extends Controller
 {
     /**
-     * Affiche la liste des événements
+     * Affiche la liste des événements avec fonctionnalité de recherche
      * (pour admin ou organisateur).
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Récupérer les paramètres de recherche
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $location = $request->input('location');
+        $dateStart = $request->input('date_start');
+        $dateEnd = $request->input('date_end');
+
         // Si c'est un admin, on peut tout afficher.
         // Si c'est un organisateur, on affiche seulement ses propres événements.
-
         $user = Auth::user();
+        $query = Event::query();
 
-        if ($user->role === 'admin') {
-            // Tous les événements
-            $events = Event::orderBy('date', 'desc')->get();
-        } else {
-            // On suppose que $user->role === 'organisateur'
-            $events = Event::where('user_id', $user->id)
-                           ->orderBy('date', 'desc')
-                           ->get();
+        // Filtrer selon le rôle de l'utilisateur
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
         }
 
-        // Retourne une vue: resources/views/events/index.blade.php (à créer)
-        return view('events.index', compact('events'));
+        // Appliquer les filtres de recherche
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($location) {
+            $query->where('location', 'like', "%{$location}%");
+        }
+
+        if ($dateStart) {
+            $query->whereDate('date', '>=', $dateStart);
+        }
+
+        if ($dateEnd) {
+            $query->whereDate('date', '<=', $dateEnd);
+        }
+
+        // Récupérer les événements avec pagination
+        $events = $query->orderBy('date', 'desc')->paginate(10);
+
+        // Retourne une vue avec les événements filtrés
+        return view('events.index', compact('events', 'search', 'status', 'location', 'dateStart', 'dateEnd'));
     }
 
     /**
@@ -78,7 +108,17 @@ class EventController extends Controller
         $validatedData['user_id'] = Auth::id();
 
         // Créer l'événement
-        Event::create($validatedData);
+        $event = Event::create($validatedData);
+
+        // Envoyer l'email de confirmation de création d'événement
+        $user = Auth::user();
+        Mail::send('emails.event_created', [
+            'user' => $user,
+            'event' => $event
+        ], function ($message) use ($user, $event) {
+            $message->to($user->email, $user->name)
+                    ->subject('Votre événement a été créé : ' . $event->title);
+        });
 
         // Redirection
         return redirect()->route('events.index')
@@ -144,12 +184,47 @@ class EventController extends Controller
             $validatedData['banner'] = $path;
         }
 
+        // Sauvegarder les anciennes valeurs pour détecter les changements
+        $oldValues = [
+            'title' => $event->title,
+            'date' => $event->date,
+            'location' => $event->location,
+            'price' => $event->price,
+            'status' => $event->status,
+        ];
+
         // Mise à jour
         $event->update($validatedData);
 
-        if ($validatedData['status'] === 'annule') {
+        // Détecter les changements
+        $changes = [];
+        if ($oldValues['date'] != $event->date) {
+            $changes['date'] = ['old' => $oldValues['date'], 'new' => $event->date];
+        }
+        if ($oldValues['location'] != $event->location) {
+            $changes['location'] = ['old' => $oldValues['location'], 'new' => $event->location];
+        }
+        if ($oldValues['price'] != $event->price) {
+            $changes['price'] = ['old' => $oldValues['price'], 'new' => $event->price];
+        }
+
+        // Si l'événement est annulé, envoyer un email d'annulation
+        if ($validatedData['status'] === 'annule' && $oldValues['status'] !== 'annule') {
             foreach ($event->participants as $participant) {
                 Mail::to($participant->email)->send(new \App\Mail\EventCancelled($event, $participant));
+            }
+        }
+        // Sinon, si des changements importants ont été effectués, notifier les participants
+        else if (count($changes) > 0) {
+            foreach ($event->participants as $participant) {
+                Mail::send('emails.event_updated', [
+                    'user' => $participant,
+                    'event' => $event,
+                    'changes' => $changes
+                ], function ($message) use ($participant, $event) {
+                    $message->to($participant->email, $participant->name)
+                            ->subject('Modification de l\'événement : ' . $event->title);
+                });
             }
         }
 
@@ -206,10 +281,22 @@ class EventController extends Controller
 
         // Inscription (pour événement gratuit)
         $event->participants()->attach($user->id);
-        // Envoi d'un email de confirmation (optionnel)
+
+        // Envoi d'un email de confirmation au participant
         Mail::to($user->email)->send(new EventRegistered($event));
 
-        // Mail::to($event->user->email)->send(new EventRegistered($event));
+        // Envoi d'un email de notification à l'organisateur
+        $organizer = $event->user;
+        if ($organizer) {
+            Mail::send('emails.new_participant', [
+                'organizer' => $organizer,
+                'participant' => $user,
+                'event' => $event
+            ], function ($message) use ($organizer, $event, $user) {
+                $message->to($organizer->email, $organizer->name)
+                        ->subject('Nouvelle inscription à votre événement : ' . $event->title);
+            });
+        }
 
         // Redirection
         return redirect()->back()
@@ -239,6 +326,15 @@ class EventController extends Controller
 
         // Désinscription
         $event->participants()->detach($user->id);
+
+        // Envoyer l'email de confirmation de désinscription
+        Mail::send('emails.event_unregistered', [
+            'user' => $user,
+            'event' => $event
+        ], function ($message) use ($user, $event) {
+            $message->to($user->email, $user->name)
+                    ->subject('Désinscription confirmée : ' . $event->title);
+        });
 
         // Redirection
         return redirect()->back()
