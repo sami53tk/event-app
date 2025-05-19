@@ -6,13 +6,7 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
+            buildDirectory: 'build', // cela générera dans public/build
         }),
     ],
-    build: {
-        manifest: true,
-        outDir: 'public/build',
-        rollupOptions: {
-            input: ['resources/js/app.js', 'resources/css/app.css'],
-        },
-    },
 });
