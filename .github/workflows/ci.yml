@@ -84,11 +84,14 @@ jobs:
     - name: Install NPM dependencies
       run: npm ci
 
-    - name: Build assets with Vite (explicit)
-      run: npx vite build --manifest --outDir public/build
-
-    - name: List build output
-      run: ls -R public/build
+    - name: Build assets with Vite
+      run: |
+        # Créer le répertoire de build s'il n'existe pas
+        mkdir -p public/build
+        # Compiler les assets
+        npm run build
+        # Vérifier que le manifeste a été créé
+        ls -la public/build/
 
     - name: Run Pest tests
       env:
