@@ -79,27 +79,16 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
 
+
+
     - name: Install NPM dependencies
       run: npm ci
 
-    - name: Build assets with Vite
-      run: npm run build
+    - name: Build assets with Vite (explicit)
+      run: npx vite build --manifest --outDir public/build
 
     - name: List build output
       run: ls -R public/build
-
-    - name: Fix Vite build directory
-      run: |
-        # Si le build a généré un sous-dossier .vite, on déplace tout dedans
-        if [ -d public/build/.vite ]; then
-          # Crée les dossiers cibles s'ils n'existent pas
-          mkdir -p public/build/assets
-          # Déplace le manifest et les assets
-          mv public/build/.vite/manifest.json public/build/manifest.json
-          mv public/build/.vite/assets/* public/build/assets/ || true
-          # Supprime le dossier .vite vide
-          rm -rf public/build/.vite
-        fi
 
     - name: Run Pest tests
       env:
