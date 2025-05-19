@@ -88,10 +88,18 @@ jobs:
     - name: List build output
       run: ls -R public/build
 
-    - name: Fix Vite manifest location
+    - name: Fix Vite build directory
       run: |
-        mkdir -p public/build
-        cp public/build/.vite/manifest.json public/build/manifest.json
+        # Si le build a généré un sous-dossier .vite, on déplace tout dedans
+        if [ -d public/build/.vite ]; then
+          # Crée les dossiers cibles s'ils n'existent pas
+          mkdir -p public/build/assets
+          # Déplace le manifest et les assets
+          mv public/build/.vite/manifest.json public/build/manifest.json
+          mv public/build/.vite/assets/* public/build/assets/ || true
+          # Supprime le dossier .vite vide
+          rm -rf public/build/.vite
+        fi
 
     - name: Run Pest tests
       env:
