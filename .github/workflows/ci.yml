@@ -86,7 +86,12 @@ jobs:
       run: npm run build
 
     - name: List build output
-      run: ls -l public/build
+      run: ls -R public/build
+
+    - name: Fix Vite manifest location
+      run: |
+        mkdir -p public/build
+        cp public/build/.vite/manifest.json public/build/manifest.json
 
     - name: Run Pest tests
       env:
