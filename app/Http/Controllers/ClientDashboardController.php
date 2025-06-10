@@ -23,10 +23,10 @@ class ClientDashboardController extends Controller
 
         // Appliquer les filtres de recherche
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
             });
         }
 

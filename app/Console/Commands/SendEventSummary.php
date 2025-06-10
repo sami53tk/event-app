@@ -36,19 +36,20 @@ class SendEventSummary extends Command
 
         foreach ($events as $event) {
             $organizer = $event->user;
-            
-            if (!$organizer) {
+
+            if (! $organizer) {
                 $this->warn("Organisateur non trouvé pour l'événement ID {$event->id}");
+
                 continue;
             }
 
             // Envoyer l'email de récapitulatif
             Mail::send('emails.event_summary', [
                 'user' => $organizer,
-                'event' => $event
+                'event' => $event,
             ], function ($message) use ($organizer, $event) {
                 $message->to($organizer->email, $organizer->name)
-                        ->subject('Récapitulatif de votre événement : ' . $event->title);
+                    ->subject('Récapitulatif de votre événement : '.$event->title);
             });
 
             $this->info("Récapitulatif envoyé pour l'événement '{$event->title}' à {$organizer->email}");

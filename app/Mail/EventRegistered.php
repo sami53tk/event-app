@@ -27,6 +27,6 @@ class EventRegistered extends Mailable
     public function build()
     {
         return $this->subject('Confirmation d\'inscription à l\'événement')
-                    ->view('emails.event_registered');
+            ->view('emails.event_registered');
     }
 }

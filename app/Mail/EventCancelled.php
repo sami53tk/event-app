@@ -13,6 +13,7 @@ class EventCancelled extends Mailable
     use Queueable, SerializesModels;
 
     public $event;
+
     public $user;
 
     public function __construct(Event $event, User $user)
@@ -24,6 +25,6 @@ class EventCancelled extends Mailable
     public function build()
     {
         return $this->subject('Annulation de l\'événement')
-                    ->view('emails.event_cancelled');
+            ->view('emails.event_cancelled');
     }
 }

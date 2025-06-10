@@ -6,8 +6,8 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Stripe\Stripe;
 use Stripe\Checkout\Session;
+use Stripe\Stripe;
 
 class PaymentController extends Controller
 {
@@ -16,9 +16,9 @@ class PaymentController extends Controller
         $event = Event::findOrFail($eventId);
         $user = Auth::user();
 
-        if (!$event->price || $event->price <= 0) {
+        if (! $event->price || $event->price <= 0) {
             return redirect()->route('events.show', $event->id)
-                             ->with('error', 'Cet événement est gratuit, pas besoin de paiement.');
+                ->with('error', 'Cet événement est gratuit, pas besoin de paiement.');
         }
 
         if ($user->role !== 'client') {
@@ -41,9 +41,9 @@ class PaymentController extends Controller
         $event = Event::findOrFail($eventId);
         $user = Auth::user();
 
-        if (!$event->price || $event->price <= 0) {
+        if (! $event->price || $event->price <= 0) {
             return redirect()->route('events.show', $event->id)
-                             ->with('error', 'Cet événement est gratuit, pas besoin de paiement.');
+                ->with('error', 'Cet événement est gratuit, pas besoin de paiement.');
         }
 
         if ($user->role !== 'client') {
@@ -69,14 +69,14 @@ class PaymentController extends Controller
                         'name' => $event->title,
                         'description' => $event->description ?? 'Inscription à l\'événement',
                     ],
-                    'unit_amount' => (int)($event->price * 100),
+                    'unit_amount' => (int) ($event->price * 100),
                 ],
                 'quantity' => 1,
             ]],
             'mode' => 'payment',
             'success_url' => route('payment.success', ['event' => $event->id]),
             'cancel_url' => route('payment.cancel', ['event' => $event->id]),
-            'client_reference_id' => $user->id . '_' . $event->id,
+            'client_reference_id' => $user->id.'_'.$event->id,
         ]);
 
         return redirect($session->url);
@@ -87,25 +87,25 @@ class PaymentController extends Controller
         $event = Event::findOrFail($eventId);
         $user = Auth::user();
 
-        if (!$event->participants->contains($user->id)) {
+        if (! $event->participants->contains($user->id)) {
             $event->participants()->attach($user->id);
 
             // Générer un ID de paiement unique
-            $paymentId = 'PAY-' . strtoupper(substr(md5(uniqid()), 0, 10));
+            $paymentId = 'PAY-'.strtoupper(substr(md5(uniqid()), 0, 10));
 
             // Envoyer l'email de confirmation de paiement
             Mail::send('emails.payment_confirmed', [
                 'user' => $user,
                 'event' => $event,
-                'paymentId' => $paymentId
+                'paymentId' => $paymentId,
             ], function ($message) use ($user, $event) {
                 $message->to($user->email, $user->name)
-                        ->subject('Paiement confirmé pour ' . $event->title);
+                    ->subject('Paiement confirmé pour '.$event->title);
             });
         }
 
         return redirect()->route('events.show', $event->id)
-                         ->with('success', 'Paiement réussi et inscription confirmée !');
+            ->with('success', 'Paiement réussi et inscription confirmée !');
     }
 
     public function cancel(Request $request, $eventId)
@@ -113,6 +113,6 @@ class PaymentController extends Controller
         $event = Event::findOrFail($eventId);
 
         return redirect()->route('events.show', $event->id)
-                         ->with('error', 'Le paiement a été annulé. Vous n\'êtes pas inscrit à l\'événement.');
+            ->with('error', 'Le paiement a été annulé. Vous n\'êtes pas inscrit à l\'événement.');
     }
 }

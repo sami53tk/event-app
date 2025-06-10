@@ -2,29 +2,31 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Event;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class EventSearchTest extends TestCase
 {
     use RefreshDatabase;
 
     protected $admin;
+
     protected $organizer;
+
     protected $client;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Créer les utilisateurs
         $this->admin = User::factory()->create(['role' => 'admin']);
         $this->organizer = User::factory()->create(['role' => 'organisateur']);
         $this->client = User::factory()->create(['role' => 'client']);
-        
+
         // Créer des événements pour les tests
         Event::create([
             'user_id' => $this->organizer->id,
@@ -37,7 +39,7 @@ class EventSearchTest extends TestCase
             'price' => 25.00,
             'currency' => 'EUR',
         ]);
-        
+
         Event::create([
             'user_id' => $this->organizer->id,
             'title' => 'Exposition d\'Art',
@@ -49,7 +51,7 @@ class EventSearchTest extends TestCase
             'price' => 10.00,
             'currency' => 'EUR',
         ]);
-        
+
         Event::create([
             'user_id' => $this->organizer->id,
             'title' => 'Marathon',
@@ -67,8 +69,8 @@ class EventSearchTest extends TestCase
     public function admin_can_search_events_by_title()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('events.index', ['search' => 'Jazz']));
-        
+            ->get(route('events.index', ['search' => 'Jazz']));
+
         $response->assertStatus(200);
         $response->assertViewHas('events');
         $response->assertSee('Concert de Jazz');
@@ -80,8 +82,8 @@ class EventSearchTest extends TestCase
     public function admin_can_search_events_by_location()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('events.index', ['location' => 'Lyon']));
-        
+            ->get(route('events.index', ['location' => 'Lyon']));
+
         $response->assertStatus(200);
         $response->assertViewHas('events');
         $response->assertSee('Exposition d\'Art');
@@ -93,8 +95,8 @@ class EventSearchTest extends TestCase
     public function admin_can_filter_events_by_status()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('events.index', ['status' => 'annule']));
-        
+            ->get(route('events.index', ['status' => 'annule']));
+
         $response->assertStatus(200);
         $response->assertViewHas('events');
         $response->assertSee('Marathon');
@@ -106,11 +108,11 @@ class EventSearchTest extends TestCase
     public function admin_can_filter_events_by_date_range()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('events.index', [
-                             'date_start' => Carbon::now()->addDays(15)->format('Y-m-d'),
-                             'date_end' => Carbon::now()->addDays(25)->format('Y-m-d'),
-                         ]));
-        
+            ->get(route('events.index', [
+                'date_start' => Carbon::now()->addDays(15)->format('Y-m-d'),
+                'date_end' => Carbon::now()->addDays(25)->format('Y-m-d'),
+            ]));
+
         $response->assertStatus(200);
         $response->assertViewHas('events');
         $response->assertSee('Exposition d\'Art');
@@ -123,7 +125,7 @@ class EventSearchTest extends TestCase
     {
         // Créer un autre organisateur avec ses propres événements
         $otherOrganizer = User::factory()->create(['role' => 'organisateur']);
-        
+
         Event::create([
             'user_id' => $otherOrganizer->id,
             'title' => 'Concert de Rock',
@@ -135,11 +137,11 @@ class EventSearchTest extends TestCase
             'price' => 25.00,
             'currency' => 'EUR',
         ]);
-        
+
         // L'organisateur ne devrait voir que ses propres événements
         $response = $this->actingAs($this->organizer)
-                         ->get(route('events.index', ['location' => 'Paris']));
-        
+            ->get(route('events.index', ['location' => 'Paris']));
+
         $response->assertStatus(200);
         $response->assertViewHas('events');
         $response->assertSee('Concert de Jazz'); // Son événement
@@ -150,8 +152,8 @@ class EventSearchTest extends TestCase
     public function client_cannot_access_event_management_search()
     {
         $response = $this->actingAs($this->client)
-                         ->get(route('events.index', ['search' => 'Jazz']));
-        
+            ->get(route('events.index', ['search' => 'Jazz']));
+
         $response->assertStatus(403);
     }
 }

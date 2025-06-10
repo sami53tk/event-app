@@ -47,7 +47,7 @@ class RegisteredUserController extends Controller
         // Envoyer l'email de bienvenue
         Mail::send('emails.welcome', ['user' => $user], function ($message) use ($user) {
             $message->to($user->email, $user->name)
-                    ->subject('Bienvenue sur Event App !');
+                ->subject('Bienvenue sur Event App !');
         });
 
         Auth::login($user);

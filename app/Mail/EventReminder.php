@@ -13,6 +13,7 @@ class EventReminder extends Mailable
     use Queueable, SerializesModels;
 
     public $event;
+
     public $user;
 
     public function __construct(Event $event, User $user)
@@ -24,6 +25,6 @@ class EventReminder extends Mailable
     public function build()
     {
         return $this->subject('Rappel : Votre événement commence bientôt')
-                    ->view('emails.event_reminder');
+            ->view('emails.event_reminder');
     }
 }

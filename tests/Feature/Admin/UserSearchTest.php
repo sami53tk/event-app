@@ -23,19 +23,19 @@ class UserSearchTest extends TestCase
         User::factory()->create([
             'name' => 'John Doe',
             'email' => 'john@example.com',
-            'role' => 'client'
+            'role' => 'client',
         ]);
 
         User::factory()->create([
             'name' => 'Jane Smith',
             'email' => 'jane@example.com',
-            'role' => 'client'
+            'role' => 'client',
         ]);
 
         User::factory()->create([
             'name' => 'Bob Johnson',
             'email' => 'bob@example.com',
-            'role' => 'organisateur'
+            'role' => 'organisateur',
         ]);
     }
 
@@ -43,7 +43,7 @@ class UserSearchTest extends TestCase
     public function admin_can_search_users_by_name()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('admin.users.index', ['search' => 'John']));
+            ->get(route('admin.users.index', ['search' => 'John']));
 
         $response->assertStatus(200);
         $response->assertViewHas('users');
@@ -59,7 +59,7 @@ class UserSearchTest extends TestCase
     public function admin_can_search_users_by_email()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('admin.users.index', ['search' => 'jane@example']));
+            ->get(route('admin.users.index', ['search' => 'jane@example']));
 
         $response->assertStatus(200);
         $response->assertViewHas('users');
@@ -72,7 +72,7 @@ class UserSearchTest extends TestCase
     public function admin_can_filter_users_by_role()
     {
         $response = $this->actingAs($this->admin)
-                         ->get(route('admin.users.index', ['role' => 'organisateur']));
+            ->get(route('admin.users.index', ['role' => 'organisateur']));
 
         $response->assertStatus(200);
         $response->assertViewHas('users');
@@ -88,14 +88,14 @@ class UserSearchTest extends TestCase
         $johnOrganizer = User::factory()->create([
             'name' => 'John Organizer',
             'email' => 'john.organizer@example.com',
-            'role' => 'organisateur'
+            'role' => 'organisateur',
         ]);
 
         $response = $this->actingAs($this->admin)
-                         ->get(route('admin.users.index', [
-                             'search' => 'John',
-                             'role' => 'organisateur'
-                         ]));
+            ->get(route('admin.users.index', [
+                'search' => 'John',
+                'role' => 'organisateur',
+            ]));
 
         $response->assertStatus(200);
         $response->assertViewHas('users');
@@ -118,12 +118,12 @@ class UserSearchTest extends TestCase
 
         // Test avec un client
         $responseClient = $this->actingAs($client)
-                               ->get(route('admin.users.index', ['search' => 'John']));
+            ->get(route('admin.users.index', ['search' => 'John']));
         $responseClient->assertStatus(403);
 
         // Test avec un organisateur
         $responseOrganizer = $this->actingAs($organizer)
-                                  ->get(route('admin.users.index', ['search' => 'John']));
+            ->get(route('admin.users.index', ['search' => 'John']));
         $responseOrganizer->assertStatus(403);
     }
 }

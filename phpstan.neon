@@ -1,12 +1,24 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
 parameters:
-    level: 0
+    level: 3
     paths:
-        - app
-        - config
-        - database
-        - routes
+        - app/
     excludePaths:
-        - vendor
-        - node_modules
-        - bootstrap/cache
-    checkMissingIterableValueType: false
+        - vendor/
+        - node_modules/
+        - bootstrap/cache/
+        - storage/
+        - tests/
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder#'
+        - '#Call to an undefined method Illuminate\\Http\\Request#'
+        - '#Access to an undefined property Illuminate\\Http\\Request#'
+        - '#Unsafe usage of new static#'
+        - '#PHPDoc tag @var#'
+        - '#Method .* should return .* but returns Illuminate\\Http\\RedirectResponse#'
+        - '#Access to an undefined property#'
+        - '#property.notFound#'
+    reportUnmatchedIgnoredErrors: false

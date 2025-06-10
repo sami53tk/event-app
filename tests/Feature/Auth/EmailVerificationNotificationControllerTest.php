@@ -4,7 +4,6 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 

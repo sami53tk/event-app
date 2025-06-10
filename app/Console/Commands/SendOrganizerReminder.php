@@ -31,26 +31,27 @@ class SendOrganizerReminder extends Command
         // Récupérer les événements qui auront lieu demain
         $tomorrow = Carbon::tomorrow()->format('Y-m-d');
         $events = Event::whereDate('date', $tomorrow)
-                      ->where('status', 'active')
-                      ->get();
+            ->where('status', 'active')
+            ->get();
 
         $this->info("Traitement de {$events->count()} événements prévus pour demain.");
 
         foreach ($events as $event) {
             $organizer = $event->user;
-            
-            if (!$organizer) {
+
+            if (! $organizer) {
                 $this->warn("Organisateur non trouvé pour l'événement ID {$event->id}");
+
                 continue;
             }
 
             // Envoyer l'email de rappel à l'organisateur
             Mail::send('emails.organizer_reminder', [
                 'organizer' => $organizer,
-                'event' => $event
+                'event' => $event,
             ], function ($message) use ($organizer, $event) {
                 $message->to($organizer->email, $organizer->name)
-                        ->subject('Rappel : votre événement a lieu demain - ' . $event->title);
+                    ->subject('Rappel : votre événement a lieu demain - '.$event->title);
             });
 
             $this->info("Rappel envoyé à l'organisateur {$organizer->name} pour l'événement '{$event->title}'");

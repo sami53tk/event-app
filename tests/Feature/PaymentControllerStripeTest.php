@@ -1,11 +1,10 @@
 <?php
 
-use App\Models\User;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
-use Mockery\MockInterface;
 
 uses(RefreshDatabase::class);
 

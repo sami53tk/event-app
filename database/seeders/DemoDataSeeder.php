@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Event;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class DemoDataSeeder extends Seeder
 {
@@ -18,10 +18,10 @@ class DemoDataSeeder extends Seeder
     {
         // Création des utilisateurs avec des rôles spécifiques
         $this->createUsers();
-        
+
         // Création des événements
         $this->createEvents();
-        
+
         // Inscription des clients aux événements
         $this->registerClientsToEvents();
     }
@@ -51,7 +51,7 @@ class DemoDataSeeder extends Seeder
         foreach ($organizerNames as $index => $name) {
             User::create([
                 'name' => $name,
-                'email' => 'organisateur' . ($index + 1) . '@example.com',
+                'email' => 'organisateur'.($index + 1).'@example.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password123'),
                 'role' => 'organisateur',
@@ -76,7 +76,7 @@ class DemoDataSeeder extends Seeder
         foreach ($clientNames as $index => $name) {
             User::create([
                 'name' => $name,
-                'email' => 'client' . ($index + 1) . '@example.com',
+                'email' => 'client'.($index + 1).'@example.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password123'),
                 'role' => 'client',
@@ -91,7 +91,7 @@ class DemoDataSeeder extends Seeder
     private function createEvents(): void
     {
         $organizers = User::where('role', 'organisateur')->get();
-        
+
         // Événements culturels (organisateur 1)
         $culturalEvents = [
             [
@@ -287,11 +287,11 @@ class DemoDataSeeder extends Seeder
     {
         $clients = User::where('role', 'client')->get();
         $events = Event::where('status', 'active')->get();
-        
+
         // Pour chaque client, on l'inscrit à 2-5 événements aléatoires
         foreach ($clients as $client) {
             $randomEvents = $events->random(rand(2, 5));
-            
+
             foreach ($randomEvents as $event) {
                 // On vérifie qu'il reste de la place
                 if ($event->participants()->count() < $event->max_participants) {

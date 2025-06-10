@@ -1,0 +1,224 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, mysql, pdo_mysql
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Build assets
+      run: npm run build
+
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to Staging
+      env:
+        STAGING_HOST: ${{ secrets.STAGING_HOST }}
+        STAGING_USER: ${{ secrets.STAGING_USER }}
+        STAGING_PATH: ${{ secrets.STAGING_PATH }}
+      run: |
+        rsync -avz --delete \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='tests' \
+          --exclude='.github' \
+          --exclude='storage/logs/*' \
+          --exclude='storage/framework/cache/*' \
+          --exclude='storage/framework/sessions/*' \
+          --exclude='storage/framework/views/*' \
+          --exclude='.env*' \
+          --exclude='phpunit.xml' \
+          --exclude='README.md' \
+          ./ ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:${{ secrets.STAGING_PATH }}/
+
+    - name: Setup Staging Environment
+      run: |
+        ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} "
+          cd ${{ secrets.STAGING_PATH }}
+          cp .env.staging .env
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan migrate --force
+          php artisan storage:link
+          chmod -R 775 storage bootstrap/cache
+          sudo systemctl reload php8.3-fpm
+          sudo systemctl reload nginx
+        "
+
+    - name: Verify Deployment
+      run: |
+        sleep 10
+        curl -f ${{ secrets.STAGING_URL }} || exit 1
+
+    - name: Notify Slack on Success
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: deployments
+        SLACK_COLOR: good
+        SLACK_TITLE: '🚀 Staging Deployment Successful'
+        SLACK_MESSAGE: 'The application has been successfully deployed to staging!'
+      if: success() && secrets.SLACK_WEBHOOK
+
+    - name: Notify Slack on Failure
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: deployments
+        SLACK_COLOR: danger
+        SLACK_TITLE: '❌ Staging Deployment Failed'
+        SLACK_MESSAGE: 'The deployment to staging has failed. Please check the GitHub Actions logs.'
+      if: failure() && secrets.SLACK_WEBHOOK
+
+  deploy-production:
+    name: Deploy to Production
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.3
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, mysql, pdo_mysql
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Build assets
+      run: npm run build
+
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Create Backup
+      run: |
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} "
+          if [ -d '${{ secrets.PRODUCTION_PATH }}' ]; then
+            cp -r '${{ secrets.PRODUCTION_PATH }}' '${{ secrets.PRODUCTION_PATH }}_backup_$TIMESTAMP'
+          fi
+        "
+
+    - name: Deploy to Production
+      env:
+        PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+        PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+        PRODUCTION_PATH: ${{ secrets.PRODUCTION_PATH }}
+      run: |
+        rsync -avz --delete \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='tests' \
+          --exclude='.github' \
+          --exclude='storage/logs/*' \
+          --exclude='storage/framework/cache/*' \
+          --exclude='storage/framework/sessions/*' \
+          --exclude='storage/framework/views/*' \
+          --exclude='.env*' \
+          --exclude='phpunit.xml' \
+          --exclude='README.md' \
+          ./ ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:${{ secrets.PRODUCTION_PATH }}/
+
+    - name: Setup Production Environment
+      run: |
+        ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} "
+          cd ${{ secrets.PRODUCTION_PATH }}
+          cp .env.production .env
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan migrate --force
+          php artisan storage:link
+          chmod -R 775 storage bootstrap/cache
+          sudo systemctl reload php8.3-fpm
+          sudo systemctl reload nginx
+        "
+
+    - name: Verify Deployment
+      run: |
+        sleep 10
+        curl -f ${{ secrets.PRODUCTION_URL }} || exit 1
+
+    - name: Notify Slack on Success
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: deployments
+        SLACK_COLOR: good
+        SLACK_TITLE: '🎉 Production Deployment Successful'
+        SLACK_MESSAGE: 'The application has been successfully deployed to production!'
+      if: success() && secrets.SLACK_WEBHOOK
+
+    - name: Notify Slack on Failure
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: deployments
+        SLACK_COLOR: danger
+        SLACK_TITLE: '💥 Production Deployment Failed'
+        SLACK_MESSAGE: 'The deployment to production has failed. Please check the GitHub Actions logs.'
+      if: failure() && secrets.SLACK_WEBHOOK

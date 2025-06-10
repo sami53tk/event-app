@@ -3,7 +3,6 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\File;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -13,48 +12,22 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Créer un faux manifeste Vite pour les tests
-        $this->createViteManifest();
-    }
+        // Configuration pour les tests
+        $this->app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+        $this->app['config']->set('app.debug', true);
 
-    /**
-     * Crée un faux manifeste Vite pour les tests.
-     */
-    protected function createViteManifest(): void
-    {
-        $buildDirectory = public_path('build');
+        // Utiliser SQLite en mémoire pour les tests
+        $this->app['config']->set('database.default', 'sqlite');
+        $this->app['config']->set('database.connections.sqlite', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
 
-        if (!File::exists($buildDirectory)) {
-            File::makeDirectory($buildDirectory, 0755, true);
-        }
+        // Désactiver la vérification CSRF pour les tests
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
 
-        $manifest = [
-            'resources/js/app.js' => [
-                'file' => 'assets/app-4a5acb5d.js',
-                'src' => 'resources/js/app.js',
-                'isEntry' => true,
-                'css' => ['assets/app-3e5c568f.css']
-            ],
-            'resources/css/app.css' => [
-                'file' => 'assets/app-3e5c568f.css',
-                'src' => 'resources/css/app.css',
-                'isEntry' => true
-            ]
-        ];
-
-        // Créer le répertoire assets s'il n'existe pas
-        if (!File::exists($buildDirectory . '/assets')) {
-            File::makeDirectory($buildDirectory . '/assets', 0755, true);
-        }
-
-        // Créer des fichiers vides pour les assets
-        File::put($buildDirectory . '/assets/app-4a5acb5d.js', 'console.log("Test JS file");');
-        File::put($buildDirectory . '/assets/app-3e5c568f.css', 'body { background: #fff; }');
-
-        // Écrire le manifeste
-        File::put(
-            $buildDirectory . '/manifest.json',
-            json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-        );
+        // Désactiver les notifications par email pendant les tests
+        $this->app['config']->set('mail.default', 'array');
     }
 }

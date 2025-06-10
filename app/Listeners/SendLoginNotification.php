@@ -26,22 +26,22 @@ class SendLoginNotification implements ShouldQueue
     public function handle(Login $event): void
     {
         $user = $event->user;
-        
+
         // Obtenir l'adresse IP
         $ipAddress = request()->ip() ?? 'Inconnue';
-        
+
         // Obtenir les informations sur le navigateur
         $agent = new Agent();
-        $browser = $agent->browser() . ' ' . $agent->version($agent->browser());
-        
+        $browser = $agent->browser().' '.$agent->version($agent->browser());
+
         // Envoyer l'email de notification de connexion
         Mail::send('emails.login_notification', [
             'user' => $user,
             'ipAddress' => $ipAddress,
-            'browser' => $browser
+            'browser' => $browser,
         ], function ($message) use ($user) {
             $message->to($user->email, $user->name)
-                    ->subject('Nouvelle connexion à votre compte Event App');
+                ->subject('Nouvelle connexion à votre compte Event App');
         });
     }
 }

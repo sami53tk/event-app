@@ -1,11 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ClientDashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ClientDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +17,7 @@ use App\Http\Controllers\ClientDashboardController;
 Route::get('/', function () {
     $user = Auth::user();
 
-    if (!$user) {
+    if (! $user) {
         return redirect()->route('login');
     }
 
@@ -29,8 +29,6 @@ Route::get('/', function () {
         return redirect()->route('dashboard.client');
     }
 })->middleware(['auth'])->name('dashboard');
-
-
 
 // Exemple de route de profil (fourni par Breeze ou par vous)
 Route::middleware('auth')->group(function () {
@@ -44,7 +42,7 @@ Route::middleware('auth')->group(function () {
  * Dashboards par rôle
  */
 
- Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Pour les dashboards admin et organisateur, tu gardes tes routes actuelles
     Route::get('/dashboard/admin', function () {
         return view('dashboard.admin');
@@ -56,19 +54,19 @@ Route::middleware('auth')->group(function () {
 
     // Pour le dashboard client, on passe par le contrôleur
     Route::get('/dashboard/client', [ClientDashboardController::class, 'index'])
-         ->name('dashboard.client');
+        ->name('dashboard.client');
 });
 /*
  * Routes d'admin pour gérer les utilisateurs
  */
-Route::group(['middleware' => ['auth', 'role:admin']], function() {
+Route::group(['middleware' => ['auth', 'role:admin']], function () {
     Route::resource('admin/users', UserController::class)->names([
-        'index'   => 'admin.users.index',
-        'create'  => 'admin.users.create',
-        'store'   => 'admin.users.store',
-        'show'    => 'admin.users.show',
-        'edit'    => 'admin.users.edit',
-        'update'  => 'admin.users.update',
+        'index' => 'admin.users.index',
+        'create' => 'admin.users.create',
+        'store' => 'admin.users.store',
+        'show' => 'admin.users.show',
+        'edit' => 'admin.users.edit',
+        'update' => 'admin.users.update',
         'destroy' => 'admin.users.destroy',
     ]);
 });
@@ -78,20 +76,20 @@ Route::group(['middleware' => ['auth', 'role:admin']], function() {
  */
 Route::group(['middleware' => ['auth', 'role:admin,organisateur']], function () {
     Route::resource('events', EventController::class)->names([
-        'index'   => 'events.index',
-        'create'  => 'events.create',
-        'store'   => 'events.store',
-        'edit'    => 'events.edit',
-        'update'  => 'events.update',
+        'index' => 'events.index',
+        'create' => 'events.create',
+        'store' => 'events.store',
+        'edit' => 'events.edit',
+        'update' => 'events.update',
         'destroy' => 'events.destroy',
     ]);
 });
 
 Route::get('/public-events', [\App\Http\Controllers\EventController::class, 'publicIndex'])
-     ->name('public.events.index');
+    ->name('public.events.index');
 
 Route::get('/events/{event}', [\App\Http\Controllers\EventController::class, 'show'])
-     ->name('events.show');
+    ->name('events.show');
 /*
  * Route pour qu’un client puisse s’inscrire à un événement
  */
@@ -110,7 +108,6 @@ Route::group(['middleware' => ['auth', 'role:client']], function () {
     Route::get('payment/{event}/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('payment/{event}/cancel', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 });
-
 
 // Routes d'authentification Laravel / Breeze / Fortify (vous en avez déjà)
 require __DIR__.'/auth.php';

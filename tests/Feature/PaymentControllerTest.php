@@ -1,11 +1,8 @@
 <?php
 
-use App\Models\User;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Stripe\Checkout\Session;
-use Stripe\Stripe;
-use Mockery\MockInterface;
 
 uses(RefreshDatabase::class);
 
@@ -17,7 +14,7 @@ beforeEach(function () {
 test('client can view checkout page for paid event', function () {
     $organizer = User::factory()->create(['role' => 'organisateur']);
     $client = User::factory()->create(['role' => 'client']);
-    
+
     $event = Event::create([
         'user_id' => $organizer->id,
         'title' => 'Paid Event',
@@ -28,9 +25,9 @@ test('client can view checkout page for paid event', function () {
         'price' => 25.99,
         'currency' => 'EUR',
     ]);
-    
+
     $response = $this->actingAs($client)->get(route('payment.show', $event->id));
-    
+
     $response->assertStatus(200);
     $response->assertViewIs('payments.checkout');
     $response->assertViewHas('event', $event);
@@ -39,7 +36,7 @@ test('client can view checkout page for paid event', function () {
 test('client is redirected from checkout page for free event', function () {
     $organizer = User::factory()->create(['role' => 'organisateur']);
     $client = User::factory()->create(['role' => 'client']);
-    
+
     $event = Event::create([
         'user_id' => $organizer->id,
         'title' => 'Free Event',
@@ -49,9 +46,9 @@ test('client is redirected from checkout page for free event', function () {
         'max_participants' => 10,
         'price' => null,
     ]);
-    
+
     $response = $this->actingAs($client)->get(route('payment.show', $event->id));
-    
+
     $response->assertRedirect(route('events.show', $event->id));
     $response->assertSessionHas('error');
 });
@@ -59,7 +56,7 @@ test('client is redirected from checkout page for free event', function () {
 test('client is registered after successful payment', function () {
     $organizer = User::factory()->create(['role' => 'organisateur']);
     $client = User::factory()->create(['role' => 'client']);
-    
+
     $event = Event::create([
         'user_id' => $organizer->id,
         'title' => 'Paid Event',
@@ -70,12 +67,12 @@ test('client is registered after successful payment', function () {
         'price' => 25.99,
         'currency' => 'EUR',
     ]);
-    
+
     $response = $this->actingAs($client)->get(route('payment.success', $event->id));
-    
+
     $response->assertRedirect(route('events.show', $event->id));
     $response->assertSessionHas('success');
-    
+
     $this->assertDatabaseHas('event_user', [
         'event_id' => $event->id,
         'user_id' => $client->id,
@@ -85,7 +82,7 @@ test('client is registered after successful payment', function () {
 test('client is not registered after cancelled payment', function () {
     $organizer = User::factory()->create(['role' => 'organisateur']);
     $client = User::factory()->create(['role' => 'client']);
-    
+
     $event = Event::create([
         'user_id' => $organizer->id,
         'title' => 'Paid Event',
@@ -96,12 +93,12 @@ test('client is not registered after cancelled payment', function () {
         'price' => 25.99,
         'currency' => 'EUR',
     ]);
-    
+
     $response = $this->actingAs($client)->get(route('payment.cancel', $event->id));
-    
+
     $response->assertRedirect(route('events.show', $event->id));
     $response->assertSessionHas('error');
-    
+
     $this->assertDatabaseMissing('event_user', [
         'event_id' => $event->id,
         'user_id' => $client->id,

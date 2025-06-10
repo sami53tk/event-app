@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\EventRegistered;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\EventRegistered;
-use Carbon\Carbon;
 
 class EventController extends Controller
 {
@@ -36,9 +35,9 @@ class EventController extends Controller
 
         // Appliquer les filtres de recherche
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -81,15 +80,15 @@ class EventController extends Controller
     {
         // Validation basique
         $validatedData = $request->validate([
-            'title'            => 'required|string|max:255',
-            'banner'           => 'nullable|image', // si vous gérez les uploads d’images
-            'description'      => 'nullable|string',
-            'date'             => 'required|date|after:today',
-            'location'         => 'required|string|max:255',
-            'status'           => 'required|in:active,annule', // Exemples de statuts
+            'title' => 'required|string|max:255',
+            'banner' => 'nullable|image', // si vous gérez les uploads d’images
+            'description' => 'nullable|string',
+            'date' => 'required|date|after:today',
+            'location' => 'required|string|max:255',
+            'status' => 'required|in:active,annule', // Exemples de statuts
             'max_participants' => 'required|integer|min:1',
-            'price'            => 'nullable|numeric|min:0',
-            'currency'         => 'nullable|string|size:3',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
             // Ajoutez d'autres champs si nécessaire
         ]);
 
@@ -114,15 +113,15 @@ class EventController extends Controller
         $user = Auth::user();
         Mail::send('emails.event_created', [
             'user' => $user,
-            'event' => $event
+            'event' => $event,
         ], function ($message) use ($user, $event) {
             $message->to($user->email, $user->name)
-                    ->subject('Votre événement a été créé : ' . $event->title);
+                ->subject('Votre événement a été créé : '.$event->title);
         });
 
         // Redirection
         return redirect()->route('events.index')
-                         ->with('success', 'Événement créé avec succès !');
+            ->with('success', 'Événement créé avec succès !');
     }
 
     /**
@@ -142,7 +141,7 @@ class EventController extends Controller
     public function edit($id)
     {
         $event = Event::findOrFail($id);
-        $user  = Auth::user();
+        $user = Auth::user();
 
         // Vérifier si user = admin OU l'organisateur propriétaire de l'événement
         if ($user->role !== 'admin' && $event->user_id !== $user->id) {
@@ -158,7 +157,7 @@ class EventController extends Controller
     public function update(Request $request, $id)
     {
         $event = Event::findOrFail($id);
-        $user  = Auth::user();
+        $user = Auth::user();
 
         // Vérifier si user = admin OU l'organisateur propriétaire de l'événement
         if ($user->role !== 'admin' && $event->user_id !== $user->id) {
@@ -167,15 +166,15 @@ class EventController extends Controller
 
         // Validation
         $validatedData = $request->validate([
-            'title'            => 'required|string|max:255',
-            'banner'           => 'nullable|image',
-            'description'      => 'nullable|string',
-            'date'             => 'required|date',
-            'location'         => 'required|string|max:255',
-            'status'           => 'required|in:active,annule',
+            'title' => 'required|string|max:255',
+            'banner' => 'nullable|image',
+            'description' => 'nullable|string',
+            'date' => 'required|date',
+            'location' => 'required|string|max:255',
+            'status' => 'required|in:active,annule',
             'max_participants' => 'required|integer|min:1',
-            'price'            => 'nullable|numeric|min:0',
-            'currency'         => 'nullable|string|size:3',
+            'price' => 'nullable|numeric|min:0',
+            'currency' => 'nullable|string|size:3',
         ]);
 
         // Gérer l'upload d'image (optionnel)
@@ -215,21 +214,21 @@ class EventController extends Controller
             }
         }
         // Sinon, si des changements importants ont été effectués, notifier les participants
-        else if (count($changes) > 0) {
+        elseif (count($changes) > 0) {
             foreach ($event->participants as $participant) {
                 Mail::send('emails.event_updated', [
                     'user' => $participant,
                     'event' => $event,
-                    'changes' => $changes
+                    'changes' => $changes,
                 ], function ($message) use ($participant, $event) {
                     $message->to($participant->email, $participant->name)
-                            ->subject('Modification de l\'événement : ' . $event->title);
+                        ->subject('Modification de l\'événement : '.$event->title);
                 });
             }
         }
 
         return redirect()->route('events.index')
-                         ->with('success', 'Événement mis à jour !');
+            ->with('success', 'Événement mis à jour !');
     }
 
     /**
@@ -238,7 +237,7 @@ class EventController extends Controller
     public function destroy($id)
     {
         $event = Event::findOrFail($id);
-        $user  = Auth::user();
+        $user = Auth::user();
 
         // Vérifier si user = admin OU l'organisateur propriétaire de l'événement
         if ($user->role !== 'admin' && $event->user_id !== $user->id) {
@@ -246,8 +245,9 @@ class EventController extends Controller
         }
 
         $event->delete();
+
         return redirect()->route('events.index')
-                         ->with('success', 'Événement supprimé !');
+            ->with('success', 'Événement supprimé !');
     }
 
     /**
@@ -291,24 +291,22 @@ class EventController extends Controller
             Mail::send('emails.new_participant', [
                 'organizer' => $organizer,
                 'participant' => $user,
-                'event' => $event
-            ], function ($message) use ($organizer, $event, $user) {
+                'event' => $event,
+            ], function ($message) use ($organizer, $event) {
                 $message->to($organizer->email, $organizer->name)
-                        ->subject('Nouvelle inscription à votre événement : ' . $event->title);
+                    ->subject('Nouvelle inscription à votre événement : '.$event->title);
             });
         }
 
         // Redirection
         return redirect()->back()
-                         ->with('success', 'Inscription réalisée avec succès !');
+            ->with('success', 'Inscription réalisée avec succès !');
     }
-
 
     /**
      * (Optionnel) Méthode pour que le client se desinscrive à un événement.
      * Vous pouvez la mettre ici ou dans un contrôleur dédié à l'inscription.
      */
-
     public function unregister($id)
     {
         $event = Event::findOrFail($id);
@@ -320,7 +318,7 @@ class EventController extends Controller
         }
 
         // Vérifier que le user est inscrit
-        if (!$event->participants->contains($user->id)) {
+        if (! $event->participants->contains($user->id)) {
             return redirect()->back()->with('error', 'Vous n’êtes pas inscrit à cet événement.');
         }
 
@@ -330,15 +328,15 @@ class EventController extends Controller
         // Envoyer l'email de confirmation de désinscription
         Mail::send('emails.event_unregistered', [
             'user' => $user,
-            'event' => $event
+            'event' => $event,
         ], function ($message) use ($user, $event) {
             $message->to($user->email, $user->name)
-                    ->subject('Désinscription confirmée : ' . $event->title);
+                ->subject('Désinscription confirmée : '.$event->title);
         });
 
         // Redirection
         return redirect()->back()
-                         ->with('success', 'Désinscription réalisée avec succès !');
+            ->with('success', 'Désinscription réalisée avec succès !');
     }
 
     public function publicIndex(Request $request)
@@ -356,7 +354,7 @@ class EventController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%$search%")
-                ->orWhere('description', 'like', "%$search%");
+                    ->orWhere('description', 'like', "%$search%");
             });
         }
 
@@ -380,5 +378,4 @@ class EventController extends Controller
 
         return view('events.index_public', compact('events'));
     }
-
 }

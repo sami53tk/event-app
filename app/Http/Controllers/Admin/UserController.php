@@ -23,9 +23,9 @@ class UserController extends Controller
 
         // Appliquer le filtre de recherche si présent
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -57,23 +57,23 @@ class UserController extends Controller
     {
         // Validation basique
         $validatedData = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role'     => 'required|in:admin,organisateur,client',
+            'role' => 'required|in:admin,organisateur,client',
         ]);
 
         // Création de l'utilisateur
         User::create([
-            'name'     => $validatedData['name'],
-            'email'    => $validatedData['email'],
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),
-            'role'     => $validatedData['role'],  // par défaut 'client', ou selon le formulaire
+            'role' => $validatedData['role'],  // par défaut 'client', ou selon le formulaire
         ]);
 
         // Redirection
         return redirect()->route('admin.users.index')
-                         ->with('success', 'Utilisateur créé avec succès !');
+            ->with('success', 'Utilisateur créé avec succès !');
     }
 
     /**
@@ -82,6 +82,7 @@ class UserController extends Controller
     public function show($id)
     {
         $user = User::findOrFail($id);
+
         return view('admin.users.show', compact('user'));
     }
 
@@ -91,6 +92,7 @@ class UserController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
+
         // Retourne une vue, ex: resources/views/admin/users/edit.blade.php
         return view('admin.users.edit', compact('user'));
     }
@@ -104,26 +106,26 @@ class UserController extends Controller
 
         // Validation
         $validatedData = $request->validate([
-            'name'  => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role'  => 'required|in:admin,organisateur,client',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'role' => 'required|in:admin,organisateur,client',
             'password' => 'nullable|string|min:8',
         ]);
 
         // Mise à jour
-        $user->name  = $validatedData['name'];
+        $user->name = $validatedData['name'];
         $user->email = $validatedData['email'];
-        $user->role  = $validatedData['role'];
+        $user->role = $validatedData['role'];
 
         // Si l'admin renseigne un nouveau mot de passe
-        if (!empty($validatedData['password'])) {
+        if (! empty($validatedData['password'])) {
             $user->password = Hash::make($validatedData['password']);
         }
 
         $user->save();
 
         return redirect()->route('admin.users.index')
-                         ->with('success', 'Utilisateur mis à jour avec succès !');
+            ->with('success', 'Utilisateur mis à jour avec succès !');
     }
 
     /**
@@ -135,6 +137,6 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')
-                         ->with('success', 'Utilisateur supprimé avec succès !');
+            ->with('success', 'Utilisateur supprimé avec succès !');
     }
 }
